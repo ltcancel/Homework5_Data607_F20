@@ -1,0 +1,78 @@
+---
+title: "Homework5"
+author: "LeTicia Cancel"
+date: "9/25/2020"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+devtools::install_github("tidyverse/tidyr")
+library(RCurl)
+library(dplyr)
+library(tidyverse)
+library(tidyr)
+library(ggplot2)
+```
+
+Import Flights data
+```{r}
+site <- getURL("https://raw.githubusercontent.com/ltcancel/Homework-5/master/Airline%20Data.csv")
+df <- read.csv(text = site, sep = ",", header  = TRUE)
+
+df
+
+
+```
+
+## Tidy the data
+```{r}
+#Fix column names of the first two columns
+df <- rename(df, Airline = X, Status = X.1)
+df
+
+#Remove the null row
+df <- df %>% drop_na()
+df
+
+#Make blank Airline NULL so it can be filled
+df[2,1] <- NA
+df[4,1] <- NA
+
+df
+
+
+#Fill the new NA columns with the values from the row above
+df <- fill(df, Airline)
+df
+
+
+#Create a new data frame making some of the columns as rows instead
+long_df <- df %>% dt_pivot_longer(
+  cols = -c(Airline,Status),
+  names_to = "City",
+  values_to = "Time"
+)
+
+long_df
+
+
+
+```
+
+## Analysis
+
+Arrival delays analysis
+```{r}
+ggplot(long_df) +
+  geom_bar(aes(Status,Time)
+```
+
