@@ -59,7 +59,7 @@ df
 long_df <- df %>% dt_pivot_longer(
   cols = -c(Airline,Status),
   names_to = "City",
-  values_to = "Time"
+  values_to = "Flights"
 )
 
 long_df
@@ -72,7 +72,11 @@ long_df
 
 Arrival delays analysis
 ```{r}
-ggplot(long_df) +
-  geom_bar(aes(Status,Time)
+onTime <- long_df %>%
+  filter(Status == "on time")
+
+onTime
+
+ggplot(onTime, aes(x = City, fill = Airline, position = "dodge")) + geom_bar()
 ```
 
