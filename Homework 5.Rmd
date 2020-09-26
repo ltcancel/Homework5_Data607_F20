@@ -15,25 +15,26 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r message=FALSE, warning=FALSE}
-devtools::install_github("tidyverse/tidyr")
+#Libraries needed
 library(RCurl)
 library(dplyr)
 library(tidyverse)
+library(tidyfast)
 library(tidyr)
 library(ggplot2)
 ```
 
-Import Flights data
+## Import Flights Data
+Import Flights data from GitHub
 ```{r}
 site <- getURL("https://raw.githubusercontent.com/ltcancel/Homework-5/master/Airline%20Data.csv")
 df <- read.csv(text = site, sep = ",", header  = TRUE)
 
-df
-
-
+head(df)
 ```
 
 ## Tidy the data
+Some of the columns need to be renamed. The data also imported with null values where a row will need to be removed or observations will need to be filled with the appropriate data. 
 ```{r}
 #Fix column names of the first two columns
 df <- rename(df, Airline = X, Status = X.1)
@@ -42,7 +43,9 @@ df
 #Remove the null row
 df <- df %>% drop_na()
 df
-
+```
+I tried to use the fill function to fill in the Airline data in the observations that are blank but it did not work at first. R did not read these observations as NULL or NA so fill did not work. I made these observations NA so fill would work. Even though I could have just filled in the observations with the exact values, I chose to go this route to practice using some of these functions. 
+```{r}
 #Make blank Airline NULL so it can be filled
 df[2,1] <- NA
 df[4,1] <- NA
@@ -62,21 +65,53 @@ long_df <- df %>% dt_pivot_longer(
   values_to = "Flights"
 )
 
-long_df
-
-
-
+head(long_df)
 ```
 
-## Analysis
 
-Arrival delays analysis
+
+## Flights Analysis
+
+Analysis to compare arrival delays for both airlines. 
 ```{r}
+#split data by flight status 
 onTime <- long_df %>%
   filter(Status == "on time")
 
-onTime
+delayed <- long_df %>% 
+  filter(Status == "delayed")
 
-ggplot(onTime, aes(x = City, fill = Airline, position = "dodge")) + geom_bar()
+onTime
+delayed
+
+#combine subsets so each flight status is in their own column
+final_flights <- cbind(onTime, delayed[,4])
+final_flights
+
+#Tidy final data frame to keep only the columns needed and rename columns
+final_flights <- final_flights %>%
+  rename(
+    onTime = Flights,
+    Delayed = `delayed[, 4]`
+  ) %>%
+  select(Airline,City,onTime,Delayed)
+
+final_flights
+
+#Comparison of on time flights by Airline for each city
+ggplot(final_flights, aes(x = Airline, y = onTime, fill = Airline)) + 
+  geom_bar(stat = "identity") +
+  facet_wrap(~City)
+
+#Comparison of delayed flights by Airline for each city
+ggplot(final_flights, aes(x = Airline, y = Delayed, fill = Airline)) + 
+  geom_bar(stat = "identity") +
+  facet_wrap(~City)
+
+
+#Comparison of cumulative status for each airline
+ggplot(long_df, aes(x = Status, y = Flights, fill = Airline)) + 
+  geom_bar(stat = "identity") +
+  facet_wrap(~Airline)
 ```
 
